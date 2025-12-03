@@ -39,21 +39,10 @@ LANGSMITH_PROJECT=openai-prompter
 From the project root:
 ```bash
 langchain serve
-# if you prefer to load .env for the shell first:
-# set -a; source .env; set +a
 ```
-LangServe will start (default port 8000) with docs at `http://localhost:8000/docs`.
-
-## Example invocation
-Call the mounted route:
+LangServe will start and you can check enter directly to the link below to test the agent yourself:
 ```bash
-curl -X POST http://localhost:8000/openai_prompter/invoke \
-  -H "Content-Type: application/json" \
-  -d '{"input": {"objective": "Draft a prompt for an agent that summarizes meeting notes into bullet points"}}'
+http://localhost:8000/openai_prompter/playground/
 ```
-You’ll get back a rewritten prompt based on the guidance in `Prompter.txt`.
 
-## What to customize
-- Edit `Prompter.txt` with your own prompt-engineering heuristics.
-- Tweak model parameters in `app/chain.py` (e.g., model name, temperature, output format).
-- Change the mounted path in `app/server.py` if you want a different endpoint prefix.
+
