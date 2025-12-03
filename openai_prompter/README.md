@@ -1,79 +1,59 @@
-# openai_prompter
+# OpenAI Prompter
 
-## Installation
+Generate cleaner prompts using OpenAI’s prompt-engineering guidelines. The helper chain reads guidance from `Prompter.txt` (copied from https://platform.openai.com/docs/guides/prompt-engineering) and rewrites your objective into a structured, higher-quality prompt.
 
-Install the LangChain CLI if you haven't yet
+## How it works
+- `Prompter.txt` contains prompt-engineering tips.
+- `app/chain.py` loads that file and builds a chain: prompt template → `ChatOpenAI` → string output.
+- `app/server.py` mounts the chain at `/openai_prompter` via LangServe. You can invoke it with REST or the LangServe UI.
 
+## Setup
+1) Create/activate an environment (example with conda):
 ```bash
-pip install -U langchain-cli
+conda create -n openai-prompter python=3.11 -y
+conda activate openai-prompter
+```
+2) Install dependencies (pip/poetry both work):
+```bash
+pip install -r requirements.txt
+
 ```
 
-## Adding packages
-
+## Environment variables
+Set your keys in the shell or place them in `.env` (already loaded by `app/server.py`):
 ```bash
-# adding packages from
-# https://github.com/langchain-ai/langchain/tree/master/templates
-langchain app add $PROJECT_NAME
-
-# adding custom GitHub repo packages
-langchain app add --repo $OWNER/$REPO
-# or with whole git string (supports other git providers):
-# langchain app add git+https://github.com/hwchase17/chain-of-verification
-
-# with a custom api mount point (defaults to `/{package_name}`)
-langchain app add $PROJECT_NAME --api_path=/my/custom/path/rag
-```
-
-Note: you remove packages by their api path
-
-```bash
-langchain app remove my/custom/path/rag
-```
-
-## Setup LangSmith (Optional)
-
-LangSmith will help us trace, monitor and debug LangChain applications.
-You can sign up for LangSmith [here](https://smith.langchain.com/).
-If you don't have access, you can skip this section
-
-```shell
+export OPENAI_API_KEY=<your-openai-key>
 export LANGSMITH_TRACING=true
-export LANGSMITH_API_KEY=<your-api-key>
-export LANGSMITH_PROJECT=<your-project>  # if not specified, defaults to "default"
+export LANGSMITH_API_KEY=<your-langsmith-key>
+export LANGSMITH_PROJECT=<your-project>  # optional, defaults to "default"
+```
+Or create `.env` in the project root:
+```
+OPENAI_API_KEY=...
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=...
+LANGSMITH_PROJECT=openai-prompter
 ```
 
-## Launch LangServe
-
+## Run the server
+From the project root:
 ```bash
 langchain serve
+# if you prefer to load .env for the shell first:
+# set -a; source .env; set +a
 ```
+LangServe will start (default port 8000) with docs at `http://localhost:8000/docs`.
 
-## Running in Docker
-
-This project folder includes a Dockerfile that allows you to easily build and host your LangServe app.
-
-### Building the Image
-
-To build the image, you simply:
-
-```shell
-docker build . -t my-langserve-app
+## Example invocation
+Call the mounted route:
+```bash
+curl -X POST http://localhost:8000/openai_prompter/invoke \
+  -H "Content-Type: application/json" \
+  -d '{"input": {"objective": "Draft a prompt for an agent that summarizes meeting notes into bullet points"}}'
 ```
+You’ll get back a rewritten prompt based on the guidance in `Prompter.txt`.
 
-If you tag your image with something other than `my-langserve-app`,
-note it for use in the next step.
-
-### Running the Image Locally
-
-To run the image, you'll need to include any environment variables
-necessary for your application.
-
-In the below example, we inject the `OPENAI_API_KEY` environment
-variable with the value set in my local environment
-(`$OPENAI_API_KEY`)
-
-We also expose port 8080 with the `-p 8080:8080` option.
-
-```shell
-docker run -e OPENAI_API_KEY=$OPENAI_API_KEY -p 8080:8080 my-langserve-app
-```
+## What to customize
+- Edit `Prompter.txt` with your own prompt-engineering heuristics.
+- Tweak model parameters in `app/chain.py` (e.g., model name, temperature, output format).
+- Change the mounted path in `app/server.py` if you want a different endpoint prefix.
